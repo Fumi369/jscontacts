@@ -44,8 +44,8 @@ router.post("/contacts", async function (req, res, next) {
       await contact.save({ fields })
       req.session.flashMessage = `「${contact.name}」さんを更新しました`
     } else {
-      const contact = models.Contact.build({ name: req.body.name, email: req.body.email })
-      await contact.save()
+      const contact = models.Contact.build(req.body)
+      await contact.save({ fields })
       req.session.flashMessage = `新しい連絡先として「${contact.name}」さんを保存しました`
       res.redirect("/")
     }
