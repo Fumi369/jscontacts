@@ -1,13 +1,5 @@
 extends layout
-
 block content
   h1=`カテゴリ ${category.name}`
-
-  - if(flashMessage)
-    div.flash=flashMessage
-
-  form(action=`/categories/${category.id}/delete`, method='post' )
-    a(href=`/categories/${category.id}/edit`) 編集
-    input(type='submit', value='削除')
 
   include _contact_table
