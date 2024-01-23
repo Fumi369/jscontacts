@@ -5,7 +5,7 @@ async function createContact() {
   const contact = models.Contact.build({
     name: `test${num}`,
     email: `${num}@example.com`,
-    categoryId: 1,
+    categoryId: 3,
   })
   console.log("Contact:", contact)
   await contact.save()
