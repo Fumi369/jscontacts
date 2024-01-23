@@ -3,7 +3,6 @@ const router = express.Router()
 const models = require("../models")
 const { ValidationError } = require("sequelize")
 
-/* GET home page. */
 router.get("/", async function (req, res, next) {
   req.session.view_counter = (req.session.view_counter || 0) + 1
   const flashMessage = req.session.flashMessage
@@ -40,7 +39,6 @@ router.get("/contacts/:id/edit", async function (req, res, next) {
 router.post("/contacts", async function (req, res, next) {
   const fields = ["name", "email", "categoryId"]
   try {
-    console.log("posted", req.body)
     if (req.body.id) {
       const contact = await models.Contact.findByPk(req.body.id)
       contact.set(req.body)
@@ -70,18 +68,68 @@ router.post("/contacts", async function (req, res, next) {
 })
 
 router.post("/contacts/:id/delete", async function (req, res, next) {
-  console.log(req.params)
   const contact = await models.Contact.findByPk(req.params.id)
   await contact.destroy()
   req.session.flashMessage = `「${contact.name}」さんを削除しました`
-  console.log(req)
   res.redirect("/")
 })
 
 router.get("/categories/:id", async function (req, res, next) {
+  const flashMessage = req.session.flashMessage
+  delete req.session.flashMessage
+
   const category = await models.Category.findByPk(req.params.id)
   const contacts = await category.getContacts({ include: "category" })
-  res.render("category", { title: `カテゴリ ${category.name}`, category, contacts })
+  res.render("category", { title: `カテゴリ ${category.name}`, category, contacts, flashMessage })
+})
+
+router.get("/category_form", async function (req, res, next) {
+  res.render("category_form", { title: "カテゴリの作成", category: {} })
+})
+
+router.get("/categories/:id/edit", async function (req, res, next) {
+  const category = await models.Category.findByPk(req.params.id)
+  res.render("category_form", { title: "カテゴリの更新", category })
+})
+
+router.post("/categories", async function (req, res, next) {
+  const fields = ["name"]
+  try {
+    if (req.body.id) {
+      const category = await models.Category.findByPk(req.body.id)
+      category.set(req.body)
+      await category.save({ fields })
+      req.session.flashMessage = `カテゴリ「${category.name}」を更新しました`
+    } else {
+      const category = models.Category.build(req.body)
+      await category.save({ fields })
+      req.session.flashMessage = `新しいカテゴリとして「${category.name}」を保存しました`
+    }
+    res.redirect("/")
+  } catch (err) {
+    if (err instanceof ValidationError) {
+      const title = req.body.id ? "カテゴリの更新" : "カテゴリの作成"
+      res.render(`category_form`, { title, category: req.body, err: err })
+    } else {
+      throw err
+    }
+  }
+})
+
+router.post("/categories/:id/delete", async function (req, res, next) {
+  const contacts = await models.Contact.findAll({
+    where: { categoryId: req.params.id },
+  })
+
+  if (contacts.length === 0) {
+    const category = await models.Category.findByPk(req.params.id)
+    await category.destroy()
+    req.session.flashMessage = `カテゴリ「${category.name}」を削除しました`
+    res.redirect("/")
+  } else {
+    req.session.flashMessage = "このカテゴリに属する連絡先があるため削除できません"
+    res.redirect(`/categories/${req.params.id}`)
+  }
 })
 
 module.exports = router
