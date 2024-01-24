@@ -8,7 +8,10 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // define association here
+      this.Category = this.belongsTo(models.Category, {
+        foreignKey: "categoryId",
+        as: "category",
+      })
     }
   }
   Contact.init(
@@ -26,6 +29,13 @@ module.exports = (sequelize, DataTypes) => {
           notEmpty: true,
           isEmail: true,
           len: [0, 100],
+        },
+      },
+      categoryId: {
+        type: DataTypes.INTEGER,
+        references: {
+          model: "Categories",
+          key: "id",
         },
       },
     },
